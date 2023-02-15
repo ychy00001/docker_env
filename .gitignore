@@ -1,0 +1,5 @@
+mysql/data/*
+redis/data/*
+nginx/www/*
+nginx/log/*
+!.gitkeep
