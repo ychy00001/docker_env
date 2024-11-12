@@ -32,3 +32,16 @@ services:
     ports:
       - 18081:80
       - 18443:443
+  dev-minio:
+    image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
+    container_name: dev-minio
+    ports:
+      - 19000:9000
+      - 19001:9001
+    environment:
+      MINIO_ROOT_USER: root
+      MINIO_ROOT_PASSWORD: JtwlIO998
+    volumes:
+      - ./minio/data:/data
+    command: server --console-address ":9001" /data
+    restart: always
