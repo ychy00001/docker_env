@@ -26,3 +26,25 @@ kafka可视化组件
 # nginx-rtmp
 使用nginx-http-flv模块镜像，包含nginx-rtmp模块，可以进行flv直播。
 官方镜像：https://hub.docker.com/r/mugennsou/nginx-http-fl
+推流:
+ffmpeg -re -stream_loop -1 -i "/Users/rain/Downloads/ylx_test.mp4" -c copy -f rtsp -rtsp_transport tcp rtsp://127.0.0.1:11554/live/test
+流转m3u8:
+ffmpeg -fflags nobuffer \                                                      
+ -loglevel debug \
+ -rtsp_transport tcp \
+ -i rtsp://127.0.0.1:11554/live/test \
+ -vsync 0 \
+ -copyts \
+ -vcodec copy \
+ -movflags frag_keyframe+empty_moov \
+ -an \
+ -hls_flags delete_segments+append_list \
+ -f hls \
+ -hls_time 1 \
+ -hls_list_size 3 \
+ -hls_segment_type mpegts \
+/Users/rain/work_space/docker_space/docker_env/nginx-rtmp/www/hls/ylx/ylx.m3u8
+
+
+# minio-old
+低版本minio用于直接存储原始图片信息
