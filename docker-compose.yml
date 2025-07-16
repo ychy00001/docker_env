@@ -1,6 +1,7 @@
 services:
   dev-mysql:
     image: mysql:5.7.42
+    hostname: dev-mysql
     ports:
         - 63306:3306
     volumes:
@@ -11,28 +12,57 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_USER: root
-
+    networks:
+      - dev-net
   dev-redis:
     image: redis:5.0-alpine
     command: redis-server /usr/local/etc/redis/redis.conf
+    restart: always
+    hostname: dev-redis
     ports:
       - "56379:6379"
     volumes:
       - ./redis/data:/data
       - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - dev-net
   dev-nginx:
     image: 'nginx:1.16.0-alpine'
     container_name: dev-nginx
+    hostname: dev-nginx
+    restart: always
     volumes:
       - ./nginx/conf.d:/etc/nginx/conf.d
       - ./nginx/log:/var/log/nginx
       - ./nginx/www:/var/www
     ports:
       - 18081:80
+      - 18082:8080
+      - 18083:8081
       - 18443:443
+    networks:
+      - dev-net
+  dev-nginx-rtmp:
+    image: 'mugennsou/nginx-http-flv:1.2.10-alpine'
+    container_name: dev-nginx-rtmp
+    hostname: dev-nginx-rtmp
+    restart: always
+    volumes:
+      - ./nginx-rtmp/config/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx-rtmp/config/conf.d:/etc/nginx/conf.d
+      - ./nginx-rtmp/config/rtmp_conf.d:/etc/nginx/rtmp_conf.d
+      - ./nginx-rtmp/log:/var/log/nginx
+      - ./nginx-rtmp/www:/var/www
+    ports:
+      - 12935:1935
+      - 12936:80
+      - 12937:1936
+    networks:
+      - dev-net
   dev-minio:
     image: quay.io/minio/minio:RELEASE.2023-12-20T01-00-02Z
     container_name: dev-minio
+    hostname: dev-minio
     ports:
       - 19000:9000
       - 19001:9001
@@ -41,5 +71,88 @@ services:
       MINIO_ROOT_PASSWORD: JtwlIO998
     volumes:
       - ./minio/data:/data
-    command: server --console-address ":9001" /data
+    command: server --console-address ":9001" --address ":9000" /data
     restart: always
+    networks:
+      - dev-net
+  dev-minio-old:
+    image: minio/minio:RELEASE.2021-06-17T00-10-46Z
+    container_name: dev-minio-old
+    hostname: dev-minio-old
+    ports:
+      - 19002:9000
+    environment:
+      MINIO_ROOT_USER: root
+      MINIO_ROOT_PASSWORD: JtwlIO998
+    volumes:
+      - ./minio-old/data:/data
+      - ./minio-old/config:/root/.minio
+    command: server /data
+    restart: always
+    networks:
+      - dev-net
+  dev-zookeeper:
+    image: bitnami/zookeeper:3.9
+    container_name: dev-zookeeper
+    hostname: dev-zookeeper
+    ports:
+      - 12181:2181
+    volumes:
+      - ./zookeeper:/bitnami/zookeeper
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - dev-net
+  dev-kafka:
+    image: bitnami/kafka:3.4
+    container_name: dev-kafka
+    hostname: dev-kafka
+    ports:
+      - 19094:9094
+    volumes:
+      - ./kafka:/bitnami/kafka
+    environment:
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://0.0.0.0:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://dev-kafka:9092,EXTERNAL://localhost:19094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@dev-kafka:9093
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+    networks:
+      - dev-net
+  dev-kafka-console-ui:
+    image: "wdkang/kafka-console-ui"
+    container_name: "dev-kafka-console-ui"
+    ports:
+      - 17766:7766
+    volumes:
+      - ./kafka-console-ui/data:/app/data
+      - ./kafka-console-ui/log:/app/log
+    # 防止读写文件有问题
+    privileged: true
+    user: root
+    networks:
+      - dev-net
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+  dev-mediakit:
+    image: zlmediakit/zlmediakit:master
+    container_name: dev-mediakit
+    hostname: dev-mediakit
+    ports:
+      - 11936:1935
+      - 11800:80
+      - 11443:443
+      - 11554:554
+      - 10000:10000
+      - 10000:10000/udp
+      - 18000:8000/udp
+      - 11900:9000/udp
+networks:
+  dev-net:
+    name: dev-net
+
+
+
+

@@ -2,4 +2,14 @@ mysql/data/*
 redis/data/*
 nginx/www/*
 nginx/log/*
+nginx-rtmp/log/*
+nginx-rtmp/www/*
+minio/data/*
+kafka/data/*
+kafka/opt/*
+zookeeper/data/*
+kafka-console-ui/data/*
+kafka-console-ui/log/*
+zookeeper/data/*
+minio-old/data/*
 !.gitkeep
